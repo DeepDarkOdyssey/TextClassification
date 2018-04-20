@@ -2,6 +2,7 @@ import tensorflow as tf
 import tqdm
 import logging
 import os
+import json
 
 
 class FastText:
@@ -66,6 +67,11 @@ class FastText:
         self._add_metrics()
         self._add_summaries()
 
+    def save_metrics(self, metrics, file_name):
+        with open(os.path.join(self.config.exp_dir, file_name) + '.json', 'w', encoding='utf8') as f:
+            metrics = {k: float(v) for k, v in metrics.items()}
+            json.dump(metrics, f, ensure_ascii=False)
+
     def train_epoch(self, sess, epoch, dataset, writer, log_freq, summary_freq):
         sess.run(self.iterator.make_initializer(dataset))
         # TODO: will this add redundant ops to the graph? I'm not sure
@@ -99,6 +105,7 @@ class FastText:
                 writer.add_summary(summaries, global_step)
 
         self.logger.info('Train metrics: {}'.format(metrics_val))
+        return metrics_val
 
     def train(self, train_set, dev_set):
         last_saver = tf.train.Saver()
@@ -129,7 +136,9 @@ class FastText:
             best_eval_acc = 0
             for epoch in range(1, self.config.num_epochs + 1):
                 self.logger.info('Epoch {}/{}'.format(epoch, self.config.num_epochs))
-                self.train_epoch(sess, epoch, train_set, train_writer, self.config.log_freq, self.config.summary_freq)
+                train_metrics = self.train_epoch(sess, epoch, train_set, train_writer, self.config.log_freq,
+                                                 self.config.summary_freq)
+                self.save_metrics(train_metrics, 'last_train_metric_after_epoch_{}'.format(epoch))
                 last_save_path = os.path.join(self.config.ckpt_dir, 'last_weights', 'after_epoch')
                 last_saver.save(sess, save_path=last_save_path, global_step=epoch)
 
@@ -144,6 +153,7 @@ class FastText:
                         self.logger.info(
                             '- Found new best accuracy, best weights has been saved in {}'.format(save_path)
                         )
+                        self.save_metrics(eval_metrics, 'best_eval_metrics_after_epoch_{}'.format(epoch))
 
     def eval_epoch(self, sess, eval_set, writer=None):
         sess.run(self.iterator.make_initializer(eval_set))
@@ -152,8 +162,8 @@ class FastText:
         while True:
             try:
                 predictions, _ = sess.run([self.predictions, self.metrics_update_op], feed_dict={self.keep_prob: 1.0})
-                if self.config.result_name:
-                    results.extend(predictions.to_list())
+                if self.config.save_result:
+                    results.extend(predictions.tolist())
 
             except tf.errors.OutOfRangeError:
                 metrics_values = {k: v[0] for k, v in self.metrics.items()}
@@ -175,10 +185,11 @@ class FastText:
         gpu_options = tf.GPUOptions(allow_growth=True)
         with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
             sess.run(tf.tables_initializer())
-            save_path = self.config.restore_from
-            if os.path.isdir(save_path):
-                save_path = tf.train.latest_checkpoint(save_path)
-            saver.restore(sess, save_path)
+            sess.run(self.metrics_reset_op)
+            load_path = self.config.restore_from
+            if os.path.isdir(load_path):
+                load_path = tf.train.latest_checkpoint(load_path)
+            saver.restore(sess, load_path)
 
             eval_metrics, results = self.eval_epoch(sess, eval_set)
 
