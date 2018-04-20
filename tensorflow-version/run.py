@@ -4,7 +4,7 @@ import json
 from munch import Munch
 from preprocess import dispensatories_preprocess
 from vocab import Vocab
-from input_fn import build_dataset, build_inputs
+from input_fn import build_dataset, build_inputs, build_predict_dataset
 from models import build_model
 from utils import prepare_experiment, set_logger
 
@@ -18,6 +18,8 @@ parser.add_argument('--train', action='store_true',
                     help='train the model')
 parser.add_argument('--test', action='store_true',
                     help='train the model')
+parser.add_argument('--predict', action='store_true',
+                    help='predict with raw input')
 
 # experiment configuration
 parser.add_argument('--logger_name', type=str, default='test',
@@ -30,6 +32,8 @@ parser.add_argument('--experiment_name', type=str, default='test',
                     help='the unique name of this experiment')
 parser.add_argument('--config_path', type=str, default='',
                     help='path to load config that has been saved before, if specified')
+parser.add_argument('--save_result', type=bool, default=False,
+                    help='whether to save the predictions during evaluation')
 parser.add_argument('--result_name', type=str, default='',
                     help='the result file which the results generated during testing will be stored in')
 
@@ -125,12 +129,15 @@ def train(config):
 
 
 def test(config):
-    if not config.config_path:
-        raise AttributeError('You need to specify config_path, which the model can load from.')
+    if not config.config_path or not config.restore_from:
+        raise AttributeError('You need to specify config_path and restore_from')
     else:
+        config_path = config.config_path
+        restore_from = config.restore_from
         with open(config.config_path) as f:
             saved_config = json.load(f)
         config.update(saved_config)
+        config.update({'config_path': config_path, 'restore_from': restore_from})
 
     set_logger(config)
 
@@ -155,6 +162,31 @@ def test(config):
                 f.write(label_vocab.id2token[result] + '\n')
 
 
+def predict(config):
+    if not config.config_path:
+        raise AttributeError('You need to specify config_path, which the model can load from.')
+    else:
+        config_path = config.config_path
+        restore_from = config.restore_from
+        with open(config.config_path) as f:
+            saved_config = json.load(f)
+        config.update(saved_config)
+        config.update({'config_path': config_path, 'restore_from': restore_from})
+
+    char_vocab = Vocab()
+    char_vocab.load_from(os.path.join(config.vocab_dir, 'char_vocab.data'))
+    label_vocab = Vocab(use_special_token=False)
+    label_vocab.load_from(os.path.join(config.vocab_dir, 'label_vocab.data'))
+
+    text = input('请输入文本：')
+    predict_set = build_predict_dataset(text, char_vocab)
+    inputs = build_inputs(predict_set.output_types, predict_set.output_shapes)
+
+    model = build_model(config, inputs)
+    _, results = model.evaluate(predict_set)
+    print('分类结果： {}'.format(label_vocab.id2token[results[0]]))
+
+
 def run():
     args = parser.parse_args()
     config = Munch().fromDict(vars(args))
@@ -165,6 +197,8 @@ def run():
         train(config)
     if config.test:
         test(config)
+    if config.predict:
+        predict(config)
 
 
 if __name__ == '__main__':
