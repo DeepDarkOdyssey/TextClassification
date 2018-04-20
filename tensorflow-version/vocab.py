@@ -4,7 +4,6 @@ This module implements a Vocab class for converting token to id and back
 
 from collections import Counter
 import numpy as np
-import pickle
 
 
 class Vocab(object):
