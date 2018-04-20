@@ -17,7 +17,8 @@ def build_dataset(config, mode, char_vocab, label_vocab):
 
     dataset = tf.data.Dataset.zip((text_set, label_set))
     dataset = dataset.map(
-        lambda text, label: (tf.string_split([text]).values, label)
+        lambda text, label: (tf.string_split([text]).values, label),
+        num_parallel_calls=config.num_parallel_calls
     )
     dataset = dataset.map(
         lambda text, label: (char_table.lookup(text), label_table.lookup(label)),
@@ -45,6 +46,27 @@ def build_dataset(config, mode, char_vocab, label_vocab):
                                           padded_shapes=padded_shapes,
                                           padding_values=padding_values)
     )
+    return dataset
+
+
+def build_predict_dataset(text, char_vocab):
+    char_table = tc.lookup.index_table_from_tensor(char_vocab.id2token,
+                                                   default_value=char_vocab.token2id[char_vocab.unk_token])
+    text_set = tf.data.Dataset.from_tensor_slices([text])
+    label_set = tf.data.Dataset.from_tensor_slices([tf.constant(0, dtype=tf.int64)])
+
+    dataset = tf.data.Dataset.zip((text_set, label_set))
+    dataset = dataset.map(
+        lambda text, label: (tf.string_split([text]).values, label),
+    )
+    dataset = dataset.map(
+        lambda text, label: (char_table.lookup(text), label),
+    )
+    dataset = dataset.batch(1)
+    dataset = dataset.map(
+        lambda text, label: {'text': text, 'text_len': tf.size(text), 'label': label}
+    )
+
     return dataset
 
 
