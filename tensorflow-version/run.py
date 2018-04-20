@@ -36,6 +36,8 @@ parser.add_argument('--save_result', type=bool, default=False,
                     help='whether to save the predictions during evaluation')
 parser.add_argument('--result_name', type=str, default='',
                     help='the result file which the results generated during testing will be stored in')
+parser.add_argument('--fixed_configs', nargs='+', type=str, default=['config_path', 'save_result', 'result_name'],
+                    help='configs need to be fixed when loading another config')
 
 # model hyperparameters
 parser.add_argument('--batch_size', type=int, default=128,
