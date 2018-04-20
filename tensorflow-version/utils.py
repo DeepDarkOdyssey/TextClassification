@@ -1,5 +1,22 @@
 import os
 import logging
+import json
+
+
+def load_config(config, path_or_dict):
+    if type(path_or_dict) == dict:
+        new_config = path_or_dict
+    elif os.path.isfile(path_or_dict):
+        with open(path_or_dict) as f:
+            new_config = json.load(f)
+    else:
+        raise ValueError('path_or_dict can be either a dict or path to a json file')
+    fixed_configs = {key: config[key] for key in config.fixed_configs}
+
+    config.update(new_config)
+    config.update(fixed_configs)
+
+    return config
 
 
 def set_logger(config):
