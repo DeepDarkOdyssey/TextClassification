@@ -1,3 +1,9 @@
+# customized
+tensorflow-version/data/
+tensorflow-version/experiments/
+tensorflow-version/global_config.json
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
