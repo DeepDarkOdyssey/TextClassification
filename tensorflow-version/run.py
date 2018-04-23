@@ -6,7 +6,7 @@ from preprocess import dispensatories_preprocess
 from vocab import Vocab
 from input_fn import build_dataset, build_inputs, build_predict_dataset
 from models import build_model
-from utils import prepare_experiment, set_logger
+from utils import prepare_experiment, set_logger, load_config
 
 
 parser = argparse.ArgumentParser()
@@ -36,7 +36,8 @@ parser.add_argument('--save_result', type=bool, default=False,
                     help='whether to save the predictions during evaluation')
 parser.add_argument('--result_name', type=str, default='',
                     help='the result file which the results generated during testing will be stored in')
-parser.add_argument('--fixed_configs', nargs='+', type=str, default=['config_path', 'save_result', 'result_name'],
+parser.add_argument('--fixed_configs', nargs='+', type=str,
+                    default=['config_path', 'save_result', 'result_name', 'restore_from'],
                     help='configs need to be fixed when loading another config')
 
 # model hyperparameters
@@ -105,9 +106,10 @@ def prepare(config):
 
 
 def train(config):
-    with open(config.global_config) as f:
-        global_config = json.load(f)
-    config.update(global_config)
+    # with open(config.global_config) as f:
+    #     global_config = json.load(f)
+    # config.update(global_config)
+    config = load_config(config, config.global_config)
 
     config = prepare_experiment(config)
 
@@ -134,12 +136,7 @@ def test(config):
     if not config.config_path or not config.restore_from:
         raise AttributeError('You need to specify config_path and restore_from')
     else:
-        config_path = config.config_path
-        restore_from = config.restore_from
-        with open(config.config_path) as f:
-            saved_config = json.load(f)
-        config.update(saved_config)
-        config.update({'config_path': config_path, 'restore_from': restore_from})
+        config = load_config(config, config.config_path)
 
     set_logger(config)
 
@@ -168,12 +165,7 @@ def predict(config):
     if not config.config_path:
         raise AttributeError('You need to specify config_path, which the model can load from.')
     else:
-        config_path = config.config_path
-        restore_from = config.restore_from
-        with open(config.config_path) as f:
-            saved_config = json.load(f)
-        config.update(saved_config)
-        config.update({'config_path': config_path, 'restore_from': restore_from})
+        config = load_config(config, config.config_path)
 
     char_vocab = Vocab()
     char_vocab.load_from(os.path.join(config.vocab_dir, 'char_vocab.data'))
@@ -181,7 +173,7 @@ def predict(config):
     label_vocab.load_from(os.path.join(config.vocab_dir, 'label_vocab.data'))
 
     text = input('请输入文本：')
-    predict_set = build_predict_dataset(text, char_vocab)
+    predict_set = build_predict_dataset(' '.join(text), char_vocab)
     inputs = build_inputs(predict_set.output_types, predict_set.output_shapes)
 
     model = build_model(config, inputs)

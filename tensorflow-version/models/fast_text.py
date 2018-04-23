@@ -138,7 +138,7 @@ class FastText:
                 self.logger.info('Epoch {}/{}'.format(epoch, self.config.num_epochs))
                 train_metrics = self.train_epoch(sess, epoch, train_set, train_writer, self.config.log_freq,
                                                  self.config.summary_freq)
-                self.save_metrics(train_metrics, 'last_train_metric_after_epoch_{}'.format(epoch))
+                self.save_metrics(train_metrics, 'last_train_metrics')
                 last_save_path = os.path.join(self.config.ckpt_dir, 'last_weights', 'after_epoch')
                 last_saver.save(sess, save_path=last_save_path, global_step=epoch)
 
@@ -153,7 +153,7 @@ class FastText:
                         self.logger.info(
                             '- Found new best accuracy, best weights has been saved in {}'.format(save_path)
                         )
-                        self.save_metrics(eval_metrics, 'best_eval_metrics_after_epoch_{}'.format(epoch))
+                        self.save_metrics(eval_metrics, 'best_eval_metrics')
 
     def eval_epoch(self, sess, eval_set, writer=None):
         sess.run(self.iterator.make_initializer(eval_set))
