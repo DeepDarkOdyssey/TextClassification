@@ -87,14 +87,3 @@ class Vocab(object):
         self.token2id = dict([(token, i) for i, token in enumerate(self.id2token)])
         self.counter = Counter(self.id2token)
 
-
-if __name__ == '__main__':
-    # vocab = Vocab(['data/dispensatories/train/texts.txt'])
-    # print(vocab.size)
-    # vocab.filter_by_count(2)
-    # print(vocab.size)
-    # vocab.save_to('data/dispensatories/vocab/char_vocab.data')
-    vocab = Vocab()
-    vocab.load_from('data/dispensatories/vocab/char_vocab.data')
-    print(vocab.size)
-    print(vocab.counter)
