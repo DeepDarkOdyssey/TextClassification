@@ -160,7 +160,7 @@ def test(config):
 
 def predict(config):
     if not config.config_path:
-        raise AttributeError('You need to specify config_path, which the model can load from.')
+        raise AttributeError('You need to specify config_path and restore_from')
     else:
         config = load_config(config, config.config_path)
 
