@@ -106,9 +106,6 @@ def prepare(config):
 
 
 def train(config):
-    # with open(config.global_config) as f:
-    #     global_config = json.load(f)
-    # config.update(global_config)
     config = load_config(config, config.global_config)
 
     config = prepare_experiment(config)
