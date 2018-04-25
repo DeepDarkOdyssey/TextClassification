@@ -1,7 +1,8 @@
 from models.fast_text import FastText
+from models.text_rnn import TextRNN
 
 __all__ = [
-    'FastText'
+    'FastText', 'TextRNN'
 ]
 
 
