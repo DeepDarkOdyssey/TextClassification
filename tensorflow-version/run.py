@@ -22,6 +22,8 @@ parser.add_argument('--predict', action='store_true',
                     help='predict with raw input')
 
 # experiment configuration
+parser.add_argument('--gpu', type=str, default='0',
+                    help='which gpu to use')
 parser.add_argument('--logger_name', type=str, default='test',
                     help='logger name')
 parser.add_argument('--experiments_dir', type=str, default='experiments/',
@@ -47,6 +49,14 @@ parser.add_argument('--num_parallel_calls', type=int, default=8,
                     help='how many threads to be used in dataset')
 parser.add_argument('--embed_size', type=int, default=150,
                     help='the dimensions of embedding vectors')
+parser.add_argument('--rnn_mode', type=str, default='bi',
+                    help='"bi" or "uni", represent the bi-direction or uni-direction mode to unroll the rnn')
+parser.add_argument('--cell_type', type=str, default='gru',
+                    help='"rnn" or "gru" or "lstm", the vanilla type of rnn cell or GRU or LSTM')
+parser.add_argument('--hidden_size', type=int, default=150,
+                    help='number of units in the hidden layer')
+parser.add_argument('--num_layers', type=int, default=1,
+                    help='number of rnn layers to stack together')
 parser.add_argument('--learning_rate', type=float, default=0.001,
                     help='the learning rate of the optimizer')
 parser.add_argument('--keep_prob', type=float, default=0.5,
@@ -182,6 +192,10 @@ def run():
     args = parser.parse_args()
     config = Munch().fromDict(vars(args))
     print(config)
+
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = config.gpu
+
     if config.prepare:
         prepare(config)
     if config.train:
