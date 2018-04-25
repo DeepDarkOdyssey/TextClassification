@@ -173,6 +173,7 @@ def predict(config):
         raise AttributeError('You need to specify config_path and restore_from')
     else:
         config = load_config(config, config.config_path)
+    config.save_result = True
 
     char_vocab = Vocab()
     char_vocab.load_from(os.path.join(config.vocab_dir, 'char_vocab.data'))
