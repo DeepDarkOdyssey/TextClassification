@@ -20,6 +20,7 @@ def build_dataset(config, mode, char_vocab, label_vocab):
         lambda text, label: (tf.string_split([text]).values, label),
         num_parallel_calls=config.num_parallel_calls
     )
+    dataset = dataset.filter(lambda text, label: tf.size(text) < 1000)
     dataset = dataset.map(
         lambda text, label: (char_table.lookup(text), label_table.lookup(label)),
         num_parallel_calls=config.num_parallel_calls
@@ -41,8 +42,8 @@ def build_dataset(config, mode, char_vocab, label_vocab):
     }
     dataset = dataset.apply(
         tc.data.bucket_by_sequence_length(element_length_func=lambda d: tf.size(d['text']),
-                                          bucket_boundaries=[10, 20, 30, 60, 100],
-                                          bucket_batch_sizes=[config.batch_size] * 6,
+                                          bucket_boundaries=[10, 30, 60, 100, 200],
+                                          bucket_batch_sizes=[config.batch_size] * 5 + [config.batch_size // 5],
                                           padded_shapes=padded_shapes,
                                           padding_values=padding_values)
     )
@@ -62,9 +63,10 @@ def build_predict_dataset(text, char_vocab):
     dataset = dataset.map(
         lambda text, label: (char_table.lookup(text), label),
     )
+    dataset = dataset.map(lambda text, label: (text, tf.size(text), label))
     dataset = dataset.batch(1)
     dataset = dataset.map(
-        lambda text, label: {'text': text, 'text_len': tf.size(text), 'label': label}
+        lambda text, text_len, label: {'text': text, 'text_len': text_len, 'label': label}
     )
 
     return dataset
