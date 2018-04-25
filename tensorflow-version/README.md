@@ -15,7 +15,7 @@ I also provide a toy data for you to give a try.
 python3 
 tensorflow >= 1.7
 tqdm
-Munch
+munch
 ```
 
 ## Task
@@ -29,7 +29,7 @@ The toy data provided in the `data/dispensatories` directory is a json file cont
 from the Internet. 
 
 In `preprocess.py` I implements some functions to process the json file, take the key and value of 
-each json dict as text and label as the data, split it into train/dev/test set, and save into the same directory.
+each json dict as text and label to build the dataset, split it into train/dev/test sets, and save into the same directory.
 
 If you want to try some other data sets, implement a new data process function and modify the code of `prepare()`
 function in `run.py`
@@ -41,7 +41,7 @@ them in some easy-to-load format for the the tf.data APIs. Additionally, most nl
 maybe the embedding for each token, This should be done together while processing the raw data. So, run the follow script
 to prepare the data once for all.
 ```
-python  run.py --prepare
+python run.py --prepare
 ```
 > For other configurations like where to load and save the data and vocab and so on, check out the `run.py` for details, 
 or try `python run.py -h`.
