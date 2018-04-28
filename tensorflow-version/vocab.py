@@ -76,14 +76,15 @@ class Vocab(object):
     def save_to(self, save_path):
         with open(save_path, 'w', encoding='utf8') as f:
             for token in self.id2token:
-                f.write(token + '\n')
+                f.write('{} {}\n'.format(token, self.counter[token]))
 
     def load_from(self, load_path):
         tokens = []
         with open(load_path, encoding='utf8') as f:
             for line in f.readlines():
-                tokens.append(line[:-1])
+                token, count = line[:-1].split()
+                self.counter[token] = count
+                tokens.append(token)
         self.id2token = tokens
         self.token2id = dict([(token, i) for i, token in enumerate(self.id2token)])
-        self.counter = Counter(self.id2token)
 
